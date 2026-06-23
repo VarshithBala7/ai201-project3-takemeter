@@ -1,0 +1,130 @@
+# TakeMeter Planning Document
+
+## 1. Community Choice
+I chose r/nba because NBA discourse is highly varied in quality.
+The same topic can generate a detailed stat-heavy breakdown or a
+one-sentence emotional outburst. This makes it ideal for a
+classification task — the distinctions between post types are
+real and meaningful to the community, not artificially imposed.
+
+## 2. Label Taxonomy
+
+### `analysis`
+A post that makes a structured argument backed by statistics,
+historical comparison, or tactical observation. The evidence is
+specific and verifiable — it would support the claim even if
+the opinion language were removed.
+
+**Example 1:**
+"Jokic's assist-to-turnover ratio this playoffs (5.2) is the
+highest for any center in the last 20 years. His passing reads
+under pressure are genuinely historic."
+
+**Example 2:**
+"The Celtics' defensive rating drops 8 points when Tatum guards
+the opposing team's best perimeter player. That's why they keep
+switching Brown onto Durant — the data backs it up."
+
+---
+
+### `hot_take`
+A bold, confident opinion stated without real supporting evidence.
+The post asserts rather than argues. Provocative framing is common.
+
+**Example 1:**
+"LeBron is the most overrated player in NBA history, full stop."
+
+**Example 2:**
+"This Warriors dynasty was always fake. They needed KD to win
+and everyone knows it."
+
+---
+
+### `reaction`
+An immediate emotional response to a specific event — a play,
+trade, or game result. Little to no argument. The post is
+expressing a feeling, not making a case.
+
+**Example 1:**
+"HOLY SHIT DID YOU SEE THAT DUNK I CANNOT BREATHE"
+
+**Example 2:**
+"I can't believe they traded him. Worst day of my life as a fan."
+
+---
+
+## 3. Hard Edge Cases
+
+### Edge Case 1: The one-stat post
+> "LeBron is overrated — his playoff win rate against
+> top-seeded opponents is below .500."
+
+Could be `hot_take` or `analysis`.
+
+**Decision rule:** If the post uses one stat with accusatory
+framing and no structured argument, label it `hot_take`.
+A post needs more than one stat AND must be reasoning toward
+a conclusion to qualify as `analysis`.
+
+### Edge Case 2: The emotional analysis post
+> "I'm so frustrated watching this team. Their pick-and-roll
+> defense has been broken all season — they're giving up 1.2
+> points per possession on that coverage, bottom-5 in the league."
+
+Could be `reaction` or `analysis`.
+
+**Decision rule:** If the post contains specific verifiable
+evidence and is making an argument — even if emotionally
+framed — label it `analysis`. Emotional tone does not
+override substantive content.
+
+## 4. Data Collection Plan
+- **Source:** Reddit r/nba — top posts and comment threads
+  from the last 6 months, collected manually
+- **Target:** ~70 examples per label (210 total)
+- **If a label is underrepresented:** Search specifically
+  for that type using Reddit search terms listed in my notes
+- **Will NOT collect:** Memes, image posts, posts under
+  15 words, purely off-court news reposts
+
+## 5. Evaluation Metrics
+I will use:
+- **Overall accuracy** — baseline correctness measure
+- **Per-class F1** — because I care equally about all three
+  labels and imbalance could hide poor performance on
+  minority classes
+- **Confusion matrix** — to identify which label pairs
+  are confused and in which direction
+
+Accuracy alone is not enough. A model predicting only
+`hot_take` could still get 33%+ accuracy on a balanced
+dataset. Per-class F1 exposes this. The confusion matrix
+tells me which specific boundary the model hasn't learned.
+
+## 6. Definition of Success
+The classifier is useful if:
+- Overall accuracy ≥ 70% on the test set
+- No per-class F1 below 0.60
+- Fine-tuned model beats zero-shot baseline by ≥ 10
+  percentage points in overall accuracy
+
+---
+
+## AI Tool Plan
+
+### Label stress-testing
+Give Claude my label definitions and ask it to generate
+10 posts at the boundary between `hot_take` and `analysis`.
+If I can't classify them cleanly, tighten definitions
+before annotating.
+
+### Annotation assistance
+Use an LLM to pre-label batches of 20-30 examples using
+my label definitions as a system prompt. Review and correct
+every single pre-assigned label. Flag pre-labeled examples
+in a `prelabeled` column in the CSV.
+
+### Failure analysis
+After training, paste wrong predictions into Claude and ask
+it to identify common patterns. Verify each pattern myself
+before including it in the report.
